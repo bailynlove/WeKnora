@@ -31,3 +31,19 @@ func TestStripPathSuffix(t *testing.T) {
 		}
 	}
 }
+
+func TestResponsesHeaders(t *testing.T) {
+	if got := ResponsesUserAgent; got == "" || got == "Go-http-client/1.1" {
+		t.Errorf("user agent must identify the client, got %q", got)
+	}
+	cases := []struct{ id, name, want string }{
+		{"abc-123", "muse-spark", "weknora-abc-123"},
+		{"", "muse-spark", "weknora-muse-spark"},
+		{"", "", "weknora-default"},
+	}
+	for _, tc := range cases {
+		if got := ResponsesSessionID(tc.id, tc.name); got != tc.want {
+			t.Errorf("ResponsesSessionID(%q,%q) = %q, want %q", tc.id, tc.name, got, tc.want)
+		}
+	}
+}

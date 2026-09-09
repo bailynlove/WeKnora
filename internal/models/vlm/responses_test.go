@@ -95,6 +95,37 @@ func TestRemoteAPIVLMResponsesFullEndpointBaseURL(t *testing.T) {
 	}
 }
 
+func TestRemoteAPIVLMResponsesSendsZenHeaders(t *testing.T) {
+	withVLMSSRFWhitelist(t, "127.0.0.1")
+	var ua, sess string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ua, sess = r.Header.Get("User-Agent"), r.Header.Get("X-Opencode-Session")
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(vlmResponsesCompletedBody))
+	}))
+	defer server.Close()
+
+	v, err := NewRemoteAPIVLM(&Config{
+		BaseURL:   server.URL,
+		ModelName: "m",
+		ModelID:   "vmid-1",
+		APIKey:    "k",
+		Provider:  "responses",
+	})
+	if err != nil {
+		t.Fatalf("NewRemoteAPIVLM: %v", err)
+	}
+	if _, err := v.Predict(t.Context(), [][]byte{testPNG}, "hi"); err != nil {
+		t.Fatalf("Predict: %v", err)
+	}
+	if ua != "WeKnora/1.0" {
+		t.Errorf("User-Agent = %q", ua)
+	}
+	if sess != "weknora-vmid-1" {
+		t.Errorf("X-Opencode-Session = %q", sess)
+	}
+}
+
 func TestRemoteAPIVLMResponsesEffort(t *testing.T) {
 	withVLMSSRFWhitelist(t, "127.0.0.1")
 	var lastRequest map[string]interface{}

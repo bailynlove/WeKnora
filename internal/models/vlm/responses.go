@@ -63,6 +63,12 @@ func (v *RemoteAPIVLM) predictWithResponses(ctx context.Context, imgBytesList []
 	}
 	httpReq.Header.Set("Content-Type", "application/json")
 	httpReq.Header.Set("Authorization", "Bearer "+v.apiKey)
+	if httpReq.Header.Get("User-Agent") == "" {
+		httpReq.Header.Set("User-Agent", modelutils.ResponsesUserAgent)
+	}
+	if httpReq.Header.Get("X-Opencode-Session") == "" {
+		httpReq.Header.Set("X-Opencode-Session", modelutils.ResponsesSessionID(v.modelID, v.modelName))
+	}
 
 	resp, err := v.httpClient.Do(httpReq)
 	if err != nil {

@@ -125,6 +125,31 @@ func TestResponsesChat_Stubbed(t *testing.T) {
 }
 
 // Stubbed end-to-end: ChatStream() assembles a live SSE transcript.
+func TestResponsesChat_SendsZenHeaders(t *testing.T) {
+	t.Setenv("SSRF_WHITELIST", "127.0.0.1")
+	secutils.ResetSSRFWhitelistForTest()
+	var ua, sess string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ua, sess = r.Header.Get("User-Agent"), r.Header.Get("X-Opencode-Session")
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(responsesCompletedBody))
+	}))
+	defer server.Close()
+
+	c, err := NewRemoteAPIChat(&ChatConfig{
+		BaseURL:   server.URL,
+		ModelName: "m",
+		ModelID:   "mid-1",
+		APIKey:    "k",
+		Provider:  string(provider.ProviderResponses),
+	})
+	require.NoError(t, err)
+	_, err = c.Chat(context.Background(), []Message{{Role: "user", Content: "hi"}}, nil)
+	require.NoError(t, err)
+	assert.Equal(t, "WeKnora/1.0", ua)
+	assert.Equal(t, "weknora-mid-1", sess)
+}
+
 func TestResponsesChatStream_Stubbed(t *testing.T) {
 	t.Setenv("SSRF_WHITELIST", "127.0.0.1")
 	secutils.ResetSSRFWhitelistForTest()

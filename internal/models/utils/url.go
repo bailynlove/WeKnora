@@ -25,3 +25,21 @@ func StripPathSuffix(base string, suffixes []string) string {
 	}
 	return trimmed
 }
+
+// ResponsesUserAgent identifies WeKnora to OpenAI Responses backends.
+// Gateways such as opencode zen require a real client UA instead of a
+// generic HTTP-library default.
+const ResponsesUserAgent = "WeKnora/1.0"
+
+// ResponsesSessionID builds the stable per-model session ID sent as
+// x-opencode-session on Responses requests (routing + prompt-cache
+// affinity). Model ID preferred, model name as fallback.
+func ResponsesSessionID(modelID, modelName string) string {
+	if modelID != "" {
+		return "weknora-" + modelID
+	}
+	if modelName != "" {
+		return "weknora-" + modelName
+	}
+	return "weknora-default"
+}

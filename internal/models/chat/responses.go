@@ -116,6 +116,16 @@ func (c *RemoteAPIChat) newResponsesHTTPRequest(ctx context.Context, req respons
 	}
 	httpReq.Header.Set("Content-Type", "application/json")
 	c.adapter.Auth(httpReq, c.authCreds(), jsonData)
+	// Identify as WeKnora with a stable per-model session: Responses
+	// gateways (e.g. opencode zen Go scope) reject generic UAs and
+	// session-less requests (MissingSessionID). Custom headers applied
+	// last so operators can still override both.
+	if httpReq.Header.Get("User-Agent") == "" {
+		httpReq.Header.Set("User-Agent", modelutils.ResponsesUserAgent)
+	}
+	if httpReq.Header.Get("X-Opencode-Session") == "" {
+		httpReq.Header.Set("X-Opencode-Session", modelutils.ResponsesSessionID(c.modelID, c.modelName))
+	}
 	secutils.ApplyCustomHeaders(httpReq, c.customHeaders)
 	return httpReq, jsonData, nil
 }
